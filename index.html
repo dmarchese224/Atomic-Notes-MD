@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Atomic Notes MD — a markdown-based Zettelkasten knowledge base using local markdown files">
+<meta name="theme-color" content="#6b1028">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atomic Notes MD">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="assets/atomic-notes-md.svg">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<title>Atomic Notes MD</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=cabinet-grotesk@400,500,700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+<div id="app" class="app-shell">
+  <aside id="sidebar" class="sidebar" aria-label="Primary navigation">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="assets/icon-32.png" alt="Atomic Notes MD logo" width="28" height="28">
+        <span class="logo-text">Atomic Notes MD</span>
+      </div>
+      <button class="sidebar-toggle icon-btn" id="sidebarToggle" aria-label="Collapse sidebar"><i data-lucide="panel-left-close"></i></button>
+      <button class="sidebar-toggle icon-btn" id="mobileCloseSidebar" aria-label="Close sidebar"><i data-lucide="x"></i></button>
+    </div>
+    <div class="sidebar-actions">
+      <button class="btn btn-primary btn-full" id="newCardBtn"><i data-lucide="plus"></i> New Card</button>
+      <button class="btn btn-secondary btn-full" id="openFolderBtn"><i data-lucide="folder-open"></i> Open Folder</button>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="cards"><i data-lucide="layout-grid"></i><span>All Cards</span></button>
+      <button class="nav-item" data-view="graph"><i data-lucide="git-branch"></i><span>Graph</span></button>
+      <button class="nav-item" data-view="search"><i data-lucide="search"></i><span>Search</span></button>
+      <button class="nav-item" data-view="recent"><i data-lucide="clock"></i><span>Recent</span></button>
+    </nav>
+    <div class="sidebar-section-label">Filter by Type</div>
+    <div class="tag-filters" id="typeFilters">
+      <button class="tag-chip active" data-type="all">All</button>
+      <button class="tag-chip" data-type="permanent">Permanent</button>
+      <button class="tag-chip" data-type="literature">Literature</button>
+      <button class="tag-chip" data-type="fleeting">Fleeting</button>
+    </div>
+    <div class="sidebar-section-label">Tags</div>
+    <div class="tag-list" id="tagList"></div>
+    <div class="sidebar-footer">
+      <button class="nav-item" id="themeToggle" data-theme-toggle aria-label="Switch theme"><i data-lucide="moon"></i><span>Dark Mode</span></button>
+      <button class="nav-item" data-view="settings"><i data-lucide="settings"></i><span>Settings</span></button>
+    </div>
+  </aside>
+  <main id="main-content" class="main-content">
+    <header class="topbar">
+      <button class="icon-btn" id="mobileSidebarToggle" aria-label="Open sidebar"><i data-lucide="menu"></i></button>
+      <div class="topbar-search"><i data-lucide="search" class="search-icon"></i><input type="search" id="quickSearch" placeholder="Quick search... (Ctrl+K)" aria-label="Quick search"></div>
+      <div class="topbar-right"><span class="card-count" id="cardCount">0 cards</span><button class="icon-btn" id="refreshBtn" aria-label="Refresh files"><i data-lucide="refresh-cw"></i></button></div>
+    </header>
+    <div class="view-container">
+      <section id="view-cards" class="view active" aria-label="All cards">
+        <div class="view-header"><h1 class="view-title">All Cards</h1><div class="view-controls"><button class="icon-btn active" id="gridViewBtn" aria-label="Grid view"><i data-lucide="layout-grid"></i></button><button class="icon-btn" id="listViewBtn" aria-label="List view"><i data-lucide="list"></i></button></div></div>
+        <div class="cards-grid" id="cardsGrid"></div>
+        <div class="empty-state" id="emptyState"><div class="empty-icon"><i data-lucide="folder-open"></i></div><h3>No cards yet</h3><p>Open a folder of markdown files or create your first card to get started.</p><button class="btn btn-primary" id="emptyOpenBtn"><i data-lucide="folder-open"></i> Open Folder</button></div>
+      </section>
+      <section id="view-graph" class="view" aria-label="Graph view"><div class="view-header"><h1 class="view-title">Knowledge Graph</h1><div class="graph-legend"><span class="legend-item"><span class="dot permanent"></span>Permanent</span><span class="legend-item"><span class="dot literature"></span>Literature</span><span class="legend-item"><span class="dot fleeting"></span>Fleeting</span></div></div><div id="graphContainer" class="graph-container"></div></section>
+      <section id="view-search" class="view" aria-label="Search"><div class="view-header"><h1 class="view-title">Search</h1></div><div class="search-bar-large"><i data-lucide="search"></i><input type="search" id="fullSearch" placeholder="Search titles, content, tags..." aria-label="Full text search"></div><div class="search-results" id="searchResults"></div></section>
+      <section id="view-recent" class="view" aria-label="Recent cards"><div class="view-header"><h1 class="view-title">Recent</h1></div><div class="cards-grid" id="recentGrid"></div></section>
+      <section id="view-settings" class="view" aria-label="Settings"><div class="view-header"><h1 class="view-title">Settings</h1></div><div class="settings-body"><div class="settings-card"><h2 class="settings-section-title">Folder</h2><p class="settings-desc">Select a local folder synced with Google Drive, Dropbox, OneDrive, or another cloud service to read and write your markdown cards.</p><div class="folder-info" id="folderInfo"><i data-lucide="folder"></i><span id="folderPath">No folder selected</span></div><button class="btn btn-primary" id="settingsOpenBtn"><i data-lucide="folder-open"></i> Choose Folder</button></div><div class="settings-card"><h2 class="settings-section-title">About</h2><p class="settings-desc">Atomic Notes MD stores all notes as plain <code>.md</code> files in your chosen folder. Files use YAML frontmatter for metadata and <code>[[wikilinks]]</code> for connections.</p></div><div class="settings-card"><h2 class="settings-section-title">Install as App</h2><p class="settings-desc">Install Atomic Notes MD on your device for offline use and an app-like experience.</p><button class="btn btn-secondary" id="installBtn" style="display:none"><i data-lucide="download"></i> Install App</button><p class="install-hint" id="installHint">Use your browser's install or add-to-home-screen option.</p></div></div></section>
+    </div>
+  </main>
+</div>
+<div id="editorOverlay" class="editor-overlay" role="dialog" aria-modal="true" aria-label="Card editor"><div class="editor-panel"><div class="editor-header"><div class="editor-header-left"><button class="icon-btn" id="closeEditor" aria-label="Close editor"><i data-lucide="x"></i></button><span class="editor-title" id="editorTitle">New Card</span></div><div class="editor-header-right"><select class="select-sm" id="editorType" aria-label="Card type"><option value="permanent">Permanent</option><option value="literature">Literature</option><option value="fleeting">Fleeting</option></select><button class="btn btn-primary btn-sm" id="saveCard"><i data-lucide="save"></i> Save</button></div></div><div class="editor-meta"><input type="text" class="meta-input" id="editorCardTitle" placeholder="Card title..." aria-label="Card title"><input type="text" class="meta-input meta-tags" id="editorTags" placeholder="Tags: aviation, fatigue, cognition..." aria-label="Tags"><input type="text" class="meta-input meta-source" id="editorSource" placeholder="Source / citation (optional)..." aria-label="Source"></div><div class="editor-body"><div class="editor-tabs"><button class="editor-tab active" data-tab="write">Write</button><button class="editor-tab" data-tab="preview">Preview</button><button class="editor-tab" data-tab="links">Links</button></div><div class="editor-tab-content active" id="tab-write"><textarea id="editorContent" class="editor-textarea" placeholder="Write your note here...
+
+Use [[Card Title]] to link to other cards." aria-label="Card content"></textarea></div><div class="editor-tab-content" id="tab-preview"><div class="editor-preview markdown-body" id="editorPreview"></div></div><div class="editor-tab-content" id="tab-links"><div class="links-panel" id="linksPanel"><div class="links-section"><h3 class="links-section-title">Outgoing Links</h3><div id="outgoingLinks" class="links-list"></div></div><div class="links-section"><h3 class="links-section-title">Backlinks</h3><div id="backlinks" class="links-list"></div></div></div></div></div></div></div>
+<div id="readerOverlay" class="editor-overlay reader-overlay" role="dialog" aria-modal="true" aria-label="Card reader"><div class="editor-panel reader-panel"><div class="editor-header"><div class="editor-header-left"><button class="icon-btn" id="closeReader" aria-label="Close reader"><i data-lucide="x"></i></button><span class="editor-title" id="readerTitle">Card</span></div><div class="editor-header-right"><span class="type-badge" id="readerType">permanent</span><button class="btn btn-secondary btn-sm" id="editFromReader"><i data-lucide="pencil"></i> Edit</button></div></div><div class="reader-meta" id="readerMeta"></div><div class="reader-body"><div class="markdown-body" id="readerContent"></div><div class="reader-links"><div class="links-section"><h3 class="links-section-title">Outgoing Links</h3><div id="readerOutgoing" class="links-list"></div></div><div class="links-section"><h3 class="links-section-title">Backlinks</h3><div id="readerBacklinks" class="links-list"></div></div></div></div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="cmdPalette" class="cmd-palette-overlay" role="dialog" aria-modal="true" aria-label="Command palette"><div class="cmd-palette"><div class="cmd-input-wrap"><i data-lucide="search"></i><input type="text" id="cmdInput" placeholder="Search cards or type a command..." aria-label="Command palette"></div><div class="cmd-results" id="cmdResults"></div></div></div>
+<script src="app.js"></script>
+</body>
+</html>
